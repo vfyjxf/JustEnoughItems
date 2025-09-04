@@ -1,5 +1,7 @@
 package mezz.jei.common.config;
 
+import mezz.jei.api.runtime.config.IJeiConfigValue;
+
 import java.util.List;
 import java.util.Set;
 
@@ -10,6 +12,8 @@ public interface IClientConfig {
 
 	boolean isCenterSearchBarEnabled();
 
+	IJeiConfigValue<Boolean> getCenterSearchBarConfig();
+
 	boolean isLowMemorySlowSearchEnabled();
 
 	boolean isCatchRenderErrorsEnabled();
@@ -18,15 +22,21 @@ public interface IClientConfig {
 
 	boolean isAddingBookmarksToFrontEnabled();
 
+	IJeiConfigValue<Boolean> getAddBookmarkToFrontConfig();
+
 	boolean isLookupFluidContentsEnabled();
 
 	boolean isLookupBlockTagsEnabled();
 
 	GiveMode getGiveMode();
 
+	IJeiConfigValue<GiveMode> getGiveModeConfig();
+
 	boolean isShowHiddenItemsEnabled();
 
 	List<BookmarkTooltipFeature> getBookmarkTooltipFeatures();
+
+	IJeiConfigValue<List<BookmarkTooltipFeature>> getBookmarkTooltipFeaturesConfig();
 
 	boolean isHoldShiftToShowBookmarkTooltipFeaturesEnabled();
 
@@ -34,9 +44,15 @@ public interface IClientConfig {
 
 	boolean isHistoryEnabled();
 
+	IJeiConfigValue<Boolean> getHistoryEnabledConfig();
+
 	int getMaxHistoryRows();
 
+	IJeiConfigValue<Integer> getMaxHistoryRowsConfig();
+
 	HistoryViewSide getHistoryViewSide();
+
+	IJeiConfigValue<HistoryViewSide> getHistoryViewSideConfig();
 
 	int getDragDelayMs();
 

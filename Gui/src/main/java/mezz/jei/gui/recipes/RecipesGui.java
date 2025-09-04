@@ -39,7 +39,7 @@ import mezz.jei.gui.input.InputType;
 import mezz.jei.gui.input.MouseUtil;
 import mezz.jei.gui.input.UserInput;
 import mezz.jei.gui.input.handlers.UserInputRouter;
-import mezz.jei.gui.overlay.bookmarks.history.HistoryList;
+import mezz.jei.gui.overlay.history.HistoryList;
 import mezz.jei.gui.recipes.lookups.IFocusedRecipes;
 import mezz.jei.gui.recipes.lookups.StaticFocusedRecipes;
 import net.minecraft.client.Minecraft;

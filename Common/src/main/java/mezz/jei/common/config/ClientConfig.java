@@ -1,6 +1,7 @@
 package mezz.jei.common.config;
 
 import com.google.common.base.Preconditions;
+import mezz.jei.api.runtime.config.IJeiConfigValue;
 import mezz.jei.common.config.file.ConfigValue;
 import mezz.jei.common.config.file.IConfigCategoryBuilder;
 import mezz.jei.common.config.file.IConfigSchemaBuilder;
@@ -19,44 +20,44 @@ public final class ClientConfig implements IClientConfig {
 	private static IClientConfig instance;
 
 	// appearance
-	private final Supplier<Boolean> centerSearchBarEnabled;
-	private final Supplier<Integer> maxRecipeGuiHeight;
+	private final ConfigValue<Boolean> centerSearchBarEnabled;
+	private final ConfigValue<Integer> maxRecipeGuiHeight;
 
 	// cheat_mode
-	private final Supplier<GiveMode> giveMode;
-	private final Supplier<Boolean> cheatToHotbarUsingHotkeysEnabled;
-	private final Supplier<Boolean> showHiddenItemsEnabled;
+	private final ConfigValue<GiveMode> giveMode;
+	private final ConfigValue<Boolean> cheatToHotbarUsingHotkeysEnabled;
+	private final ConfigValue<Boolean> showHiddenItemsEnabled;
 
 	// bookmarks
-	private final Supplier<Boolean> addBookmarksToFrontEnabled;
-	private final Supplier<List<BookmarkTooltipFeature>> bookmarkTooltipFeatures;
-	private final Supplier<Boolean> holdShiftToShowBookmarkTooltipFeaturesEnabled;
-	private final Supplier<Boolean> dragToRearrangeBookmarksEnabled;
+	private final ConfigValue<Boolean> addBookmarksToFrontEnabled;
+	private final ConfigValue<List<BookmarkTooltipFeature>> bookmarkTooltipFeatures;
+	private final ConfigValue<Boolean> holdShiftToShowBookmarkTooltipFeaturesEnabled;
+	private final ConfigValue<Boolean> dragToRearrangeBookmarksEnabled;
 
 	// history
-	private final Supplier<Boolean> historyEnabled;
-	private final Supplier<Integer> maxHistoryRows;
-	private final Supplier<HistoryViewSide> historyViewSide;
+	private final ConfigValue<Boolean> historyEnabled;
+	private final ConfigValue<Integer> maxHistoryRows;
+	private final ConfigValue<HistoryViewSide> historyViewSide;
 
 	// advanced
-	private final Supplier<Boolean> lowMemorySlowSearchEnabled;
-	private final Supplier<Boolean> catchRenderErrorsEnabled;
-	private final Supplier<Boolean> lookupFluidContentsEnabled;
-	private final Supplier<Boolean> lookupBlockTagsEnabled;
-	private final Supplier<Boolean> showTagRecipesEnabled;
-	private final Supplier<Boolean> showCreativeTabNamesEnabled;
+	private final ConfigValue<Boolean> lowMemorySlowSearchEnabled;
+	private final ConfigValue<Boolean> catchRenderErrorsEnabled;
+	private final ConfigValue<Boolean> lookupFluidContentsEnabled;
+	private final ConfigValue<Boolean> lookupBlockTagsEnabled;
+	private final ConfigValue<Boolean> showTagRecipesEnabled;
+	private final ConfigValue<Boolean> showCreativeTabNamesEnabled;
 
 	// input
-	private final Supplier<Integer> dragDelayMs;
-	private final Supplier<Integer> smoothScrollRate;
+	private final ConfigValue<Integer> dragDelayMs;
+	private final ConfigValue<Integer> smoothScrollRate;
 
 	// sorting
-	private final Supplier<List<IngredientSortStage>> ingredientSorterStages;
+	private final ConfigValue<List<IngredientSortStage>> ingredientSorterStages;
 	private final ConfigValue<List<RecipeSorterStage>> recipeSorterStages;
 
 	// tags
-	private final Supplier<Boolean> tagContentTooltipEnabled;
-	private final Supplier<Boolean> hideSingleIngredientTagsEnabled;
+	private final ConfigValue<Boolean> tagContentTooltipEnabled;
+	private final ConfigValue<Boolean> hideSingleIngredientTagsEnabled;
 
 	public ClientConfig(IConfigSchemaBuilder schema) {
 		instance = this;
@@ -227,6 +228,11 @@ public final class ClientConfig implements IClientConfig {
 	}
 
 	@Override
+	public IJeiConfigValue<Boolean> getCenterSearchBarConfig() {
+		return centerSearchBarEnabled;
+	}
+
+	@Override
 	public boolean isLowMemorySlowSearchEnabled() {
 		return lowMemorySlowSearchEnabled.get();
 	}
@@ -247,6 +253,11 @@ public final class ClientConfig implements IClientConfig {
 	}
 
 	@Override
+	public IJeiConfigValue<Boolean> getAddBookmarkToFrontConfig() {
+		return addBookmarksToFrontEnabled;
+	}
+
+	@Override
 	public boolean isLookupFluidContentsEnabled() {
 		return lookupFluidContentsEnabled.get();
 	}
@@ -262,6 +273,11 @@ public final class ClientConfig implements IClientConfig {
 	}
 
 	@Override
+	public IJeiConfigValue<GiveMode> getGiveModeConfig() {
+		return giveMode;
+	}
+
+	@Override
 	public boolean isShowHiddenItemsEnabled() {
 		return showHiddenItemsEnabled.get();
 	}
@@ -269,6 +285,11 @@ public final class ClientConfig implements IClientConfig {
 	@Override
 	public List<BookmarkTooltipFeature> getBookmarkTooltipFeatures() {
 		return bookmarkTooltipFeatures.get();
+	}
+
+	@Override
+	public IJeiConfigValue<List<BookmarkTooltipFeature>> getBookmarkTooltipFeaturesConfig() {
+		return bookmarkTooltipFeatures;
 	}
 
 	@Override
@@ -287,13 +308,28 @@ public final class ClientConfig implements IClientConfig {
 	}
 
 	@Override
+	public IJeiConfigValue<Boolean> getHistoryEnabledConfig() {
+		return historyEnabled;
+	}
+
+	@Override
 	public int getMaxHistoryRows() {
 		return maxHistoryRows.get();
 	}
 
 	@Override
+	public IJeiConfigValue<Integer> getMaxHistoryRowsConfig() {
+		return maxHistoryRows;
+	}
+
+	@Override
 	public HistoryViewSide getHistoryViewSide() {
 		return historyViewSide.get();
+	}
+
+	@Override
+	public IJeiConfigValue<HistoryViewSide> getHistoryViewSideConfig() {
+		return historyViewSide;
 	}
 
 	@Override

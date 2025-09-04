@@ -1,4 +1,4 @@
-package mezz.jei.gui.overlay.bookmarks.history;
+package mezz.jei.gui.overlay.history;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;

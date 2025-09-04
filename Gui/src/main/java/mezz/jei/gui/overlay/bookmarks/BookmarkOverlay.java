@@ -28,7 +28,7 @@ import mezz.jei.gui.input.handlers.ProxyInputHandler;
 import mezz.jei.gui.overlay.IngredientGridWithNavigation;
 import mezz.jei.gui.overlay.IngredientListSlot;
 import mezz.jei.gui.overlay.ScreenPropertiesCache;
-import mezz.jei.gui.overlay.bookmarks.history.HistoryOverlay;
+import mezz.jei.gui.overlay.history.HistoryOverlay;
 import mezz.jei.gui.overlay.elements.IElement;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

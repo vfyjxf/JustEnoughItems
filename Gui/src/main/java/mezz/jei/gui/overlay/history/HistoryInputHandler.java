@@ -1,4 +1,4 @@
-package mezz.jei.gui.overlay.bookmarks.history;
+package mezz.jei.gui.overlay.history;
 
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.gui.input.CombinedRecipeFocusSource;

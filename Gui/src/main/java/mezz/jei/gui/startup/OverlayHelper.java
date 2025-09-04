@@ -15,8 +15,8 @@ import mezz.jei.gui.overlay.IngredientGrid;
 import mezz.jei.gui.overlay.IngredientGridWithNavigation;
 import mezz.jei.gui.overlay.IngredientListOverlay;
 import mezz.jei.gui.overlay.bookmarks.BookmarkOverlay;
-import mezz.jei.gui.overlay.bookmarks.history.HistoryList;
-import mezz.jei.gui.overlay.bookmarks.history.HistoryOverlay;
+import mezz.jei.gui.overlay.history.HistoryList;
+import mezz.jei.gui.overlay.history.HistoryOverlay;
 
 public final class OverlayHelper {
 	private OverlayHelper() {}
