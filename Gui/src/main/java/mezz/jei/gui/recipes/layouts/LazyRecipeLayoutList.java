@@ -4,6 +4,7 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.IRecipeManager;
 import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.transfer.IRecipeTransferManager;
 import mezz.jei.api.runtime.IIngredientManager;
@@ -12,14 +13,11 @@ import mezz.jei.common.Internal;
 import mezz.jei.common.config.RecipeSorterStage;
 import mezz.jei.gui.bookmarks.BookmarkList;
 import mezz.jei.gui.bookmarks.RecipeBookmark;
-import mezz.jei.gui.recipes.RecipeBookmarkButton;
+import mezz.jei.gui.recipes.IRecipeLayoutWithButtons;
 import mezz.jei.gui.recipes.RecipeLayoutWithButtons;
 import mezz.jei.gui.recipes.RecipeSortUtil;
-import mezz.jei.gui.recipes.RecipeTransferButton;
 import mezz.jei.gui.recipes.RecipesGui;
 import mezz.jei.gui.recipes.lookups.IFocusedRecipes;
-import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +32,8 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 	private final IRecipeCategory<T> recipeCategory;
 	private final RecipesGui recipesGui;
 	private final IFocusGroup focusGroup;
-	private final List<RecipeLayoutWithButtons<?>> results;
-	private final List<RecipeLayoutWithButtons<?>> craftMissing;
+	private final List<IRecipeLayoutWithButtons<?>> results;
+	private final List<IRecipeLayoutWithButtons<?>> craftMissing;
 	private final Iterator<T> unsortedIterator;
 	private final int size;
 
@@ -74,6 +72,7 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 		if (matchingBookmarks) {
 			// if bookmarks go first, start by grabbing all the bookmarked elements, it's relatively cheap
 			RecipeType<T> recipeType = recipeCategory.getRecipeType();
+			List<IRecipeButtonControllerFactory> recipeButtonControllerFactories = recipeManager.getRecipeButtonControllerFactories();
 
 			recipes = new ArrayList<>(recipes);
 			Iterator<T> iterator = recipes.iterator();
@@ -82,7 +81,7 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 				RecipeBookmark<T, ?> recipeBookmark = bookmarkList.getMatchingBookmark(recipeType, recipe);
 				if (recipeBookmark != null) {
 					IRecipeLayoutDrawable<T> recipeLayout = recipeManager.createRecipeLayoutDrawableOrShowError(recipeCategory, recipe, focusGroup);
-					RecipeLayoutWithButtons<T> recipeLayoutWithButtons = createRecipeLayoutWithButtons(recipeLayout, recipeBookmark, bookmarkList, recipesGui, container);
+					IRecipeLayoutWithButtons<T> recipeLayoutWithButtons = RecipeLayoutWithButtons.create(recipeLayout, recipeBookmark, bookmarkList, recipesGui, recipeButtonControllerFactories);
 					results.add(recipeLayoutWithButtons);
 					iterator.remove();
 				}
@@ -92,31 +91,17 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 		this.unsortedIterator = recipes.iterator();
 	}
 
-	private static <T> RecipeLayoutWithButtons<T> createRecipeLayoutWithButtons(
-		IRecipeLayoutDrawable<T> recipeLayoutDrawable,
-		@Nullable RecipeBookmark<?, ?> recipeBookmark,
-		BookmarkList bookmarks,
-		RecipesGui recipesGui,
-		@Nullable AbstractContainerMenu container
-	) {
-		Minecraft minecraft = Minecraft.getInstance();
-		Player player = minecraft.player;
-		RecipeTransferButton transferButton = RecipeTransferButton.create(recipeLayoutDrawable, recipesGui::onClose, container, player);
-		RecipeBookmarkButton bookmarkButton = RecipeBookmarkButton.create(recipeLayoutDrawable, bookmarks, recipeBookmark);
-		return new RecipeLayoutWithButtons<>(recipeLayoutDrawable, transferButton, bookmarkButton);
-	}
-
 	private IRecipeLayoutDrawable<T> createRecipeLayout(T recipe) {
 		return recipeManager.createRecipeLayoutDrawableOrShowError(recipeCategory, recipe, focusGroup);
 	}
 
-	private RecipeLayoutWithButtons<T> createRecipeLayoutWithButtons(
+	private IRecipeLayoutWithButtons<T> createRecipeLayoutWithButtons(
 		IRecipeLayoutDrawable<T> recipeLayoutDrawable,
 		IIngredientManager ingredientManager,
-		@Nullable AbstractContainerMenu container
+		List<IRecipeButtonControllerFactory> recipeButtonControllerFactories
 	) {
 		RecipeBookmark<T, ?> recipeBookmark = RecipeBookmark.create(recipeLayoutDrawable, ingredientManager);
-		return createRecipeLayoutWithButtons(recipeLayoutDrawable, recipeBookmark, bookmarkList, recipesGui, container);
+		return RecipeLayoutWithButtons.create(recipeLayoutDrawable, recipeBookmark, bookmarkList, recipesGui, recipeButtonControllerFactories);
 	}
 
 	@Override
@@ -125,7 +110,7 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 	}
 
 	@Override
-	public List<RecipeLayoutWithButtons<?>> subList(int from, int to) {
+	public List<IRecipeLayoutWithButtons<?>> subList(int from, int to) {
 		ensureResults(to - 1);
 		return results.subList(from, to);
 	}
@@ -133,14 +118,14 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 	private void ensureResults(int index) {
 		AbstractContainerMenu container = recipesGui.getParentContainerMenu();
 		while (index >= results.size()) {
-			if (!calculateNextResult(container)) {
+			if (!calculateNextResult()) {
 				return;
 			}
 		}
 	}
 
 	@Override
-	public Optional<RecipeLayoutWithButtons<?>> findFirst() {
+	public Optional<IRecipeLayoutWithButtons<?>> findFirst() {
 		ensureResults(0);
 		if (results.isEmpty()) {
 			return Optional.empty();
@@ -149,23 +134,23 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 	}
 
 	@Override
-	public void tick(@Nullable AbstractContainerMenu container) {
-		calculateNextResult(container);
+	public void tick() {
+		calculateNextResult();
 	}
 
-	private boolean calculateNextResult(@Nullable AbstractContainerMenu container) {
+	private boolean calculateNextResult() {
 		IJeiRuntime jeiRuntime = Internal.getJeiRuntime();
 		IIngredientManager ingredientManager = jeiRuntime.getIngredientManager();
+		List<IRecipeButtonControllerFactory> recipeButtonControllerFactories = recipeManager.getRecipeButtonControllerFactories();
 
 		while (unsortedIterator.hasNext()) {
 			T recipe = unsortedIterator.next();
 			IRecipeLayoutDrawable<T> recipeLayout = createRecipeLayout(recipe);
-			RecipeLayoutWithButtons<T> recipeLayoutWithButtons = createRecipeLayoutWithButtons(recipeLayout, ingredientManager, container);
-			RecipeTransferButton transferButton = recipeLayoutWithButtons.transferButton();
+			IRecipeLayoutWithButtons<T> recipeLayoutWithButtons = createRecipeLayoutWithButtons(recipeLayout, ingredientManager, recipeButtonControllerFactories);
 
 			if (matchingCraftable) {
 				// if craftables go first, look for a 100% craftable element
-				int missingCountHint = transferButton.getMissingCountHint();
+				int missingCountHint = recipeLayoutWithButtons.getMissingCountHint();
 				if (missingCountHint == 0) {
 					results.add(recipeLayoutWithButtons);
 					return true;
@@ -181,7 +166,7 @@ public class LazyRecipeLayoutList<T> implements IRecipeLayoutList {
 		// from here we're finished with calculating all the transfer handlers,
 		// just sort and add everything left to the results
 		if (!craftMissing.isEmpty()) {
-			craftMissing.sort(RecipeSortUtil.getCraftableComparator());
+			craftMissing.sort(RecipeSortUtil.getComparator());
 			results.addAll(craftMissing);
 			craftMissing.clear();
 			return true;

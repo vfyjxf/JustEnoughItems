@@ -1,31 +1,52 @@
 package mezz.jei.gui;
 
+import mezz.jei.api.gui.inputs.IJeiUserInput;
 import mezz.jei.common.Internal;
-import net.minecraft.client.gui.GuiGraphics;
-import mezz.jei.gui.elements.GuiIconButton;
-import mezz.jei.common.gui.textures.Textures;
+import mezz.jei.common.util.ImmutableRect2i;
+import mezz.jei.common.util.MathUtil;
+import mezz.jei.api.gui.buttons.IButtonState;
+import mezz.jei.api.gui.buttons.IIconButtonController;
+import mezz.jei.gui.elements.IconButton;
 import mezz.jei.gui.input.IPaged;
 import mezz.jei.gui.input.IUserInputHandler;
 import mezz.jei.gui.input.handlers.CombinedInputHandler;
-import mezz.jei.common.util.ImmutableRect2i;
-import mezz.jei.common.util.MathUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 
 public class PageNavigation {
 	private final IPaged paged;
-	private final GuiIconButton nextButton;
-	private final GuiIconButton backButton;
+	private final IconButton nextButton;
+	private final IconButton backButton;
 	private final boolean hideOnSinglePage;
 	private String pageNumDisplayString = "1/1";
 	private ImmutableRect2i area = ImmutableRect2i.EMPTY;
 
 	public PageNavigation(IPaged paged, boolean hideOnSinglePage) {
 		this.paged = paged;
-		Textures textures = Internal.getTextures();
-		this.nextButton = new GuiIconButton(textures.getArrowNext(), b -> paged.nextPage());
-		this.backButton = new GuiIconButton(textures.getArrowPrevious(), b -> paged.previousPage());
+		this.nextButton = new IconButton(new IIconButtonController() {
+			@Override
+			public boolean onPress(IJeiUserInput b) {
+				return b.isSimulate() || paged.nextPage();
+			}
+
+			@Override
+			public void initState(IButtonState state) {
+				state.setIcon(Internal.getTextures().getArrowNext());
+			}
+		});
+		this.backButton = new IconButton(new IIconButtonController() {
+			@Override
+			public boolean onPress(IJeiUserInput b) {
+				return b.isSimulate() || paged.previousPage();
+			}
+
+			@Override
+			public void initState(IButtonState state) {
+				state.setIcon(Internal.getTextures().getArrowPrevious());
+			}
+		});
 		this.hideOnSinglePage = hideOnSinglePage;
 	}
 
@@ -70,8 +91,8 @@ public class PageNavigation {
 			if (centerArea.width() <= availableWidth) {
 				guiGraphics.drawString(font, pageNumDisplayString, centerArea.getX(), centerArea.getY(), 0xFFFFFFFF);
 			}
-			nextButton.render(guiGraphics, mouseX, mouseY, partialTicks);
-			backButton.render(guiGraphics, mouseX, mouseY, partialTicks);
+			nextButton.draw(guiGraphics, mouseX, mouseY, partialTicks);
+			backButton.draw(guiGraphics, mouseX, mouseY, partialTicks);
 		}
 	}
 

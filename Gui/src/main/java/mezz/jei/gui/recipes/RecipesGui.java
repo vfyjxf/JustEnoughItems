@@ -6,6 +6,7 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.drawable.IDrawableStatic;
 import mezz.jei.api.gui.handlers.IGuiProperties;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
+import mezz.jei.api.gui.inputs.IJeiUserInput;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
@@ -31,7 +32,9 @@ import mezz.jei.common.util.MathUtil;
 import mezz.jei.common.util.StringUtil;
 import mezz.jei.gui.GuiProperties;
 import mezz.jei.gui.bookmarks.BookmarkList;
-import mezz.jei.gui.elements.GuiIconButton;
+import mezz.jei.api.gui.buttons.IButtonState;
+import mezz.jei.api.gui.buttons.IIconButtonController;
+import mezz.jei.gui.elements.IconButton;
 import mezz.jei.gui.input.IClickableIngredientInternal;
 import mezz.jei.gui.input.IDraggableIngredientInternal;
 import mezz.jei.gui.input.IRecipeFocusSource;
@@ -85,10 +88,10 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 	private final RecipeOptionButtons optionButtons;
 	private final UserInputRouter inputHandler;
 
-	private final GuiIconButton nextRecipeCategory;
-	private final GuiIconButton previousRecipeCategory;
-	private final GuiIconButton nextPage;
-	private final GuiIconButton previousPage;
+	private final IconButton nextRecipeCategory;
+	private final IconButton previousRecipeCategory;
+	private final IconButton nextPage;
+	private final IconButton previousPage;
 
 	@Nullable
 	private Screen parentScreen;
@@ -140,10 +143,88 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 		IDrawableStatic arrowNext = textures.getArrowNext();
 		IDrawableStatic arrowPrevious = textures.getArrowPrevious();
 
-		nextRecipeCategory = new GuiIconButton(0, 0, smallButtonWidth, smallButtonHeight, arrowNext, b -> logic.nextRecipeCategory());
-		previousRecipeCategory = new GuiIconButton(0, 0, smallButtonWidth, smallButtonHeight, arrowPrevious, b -> logic.previousRecipeCategory());
-		nextPage = new GuiIconButton(0, 0, smallButtonWidth, smallButtonHeight, arrowNext, b -> logic.nextPage());
-		previousPage = new GuiIconButton(0, 0, smallButtonWidth, smallButtonHeight, arrowPrevious, b -> logic.previousPage());
+		ImmutableRect2i buttonSize = new ImmutableRect2i(0, 0, smallButtonWidth, smallButtonHeight);
+
+		nextRecipeCategory = new IconButton(
+			new IIconButtonController() {
+				@Override
+				public boolean onPress(IJeiUserInput input) {
+					return input.isSimulate() || logic.nextRecipeCategory();
+				}
+
+				@Override
+				public void initState(IButtonState state) {
+					state.setIcon(arrowNext);
+					updateState(state);
+				}
+
+				@Override
+				public void updateState(IButtonState state) {
+					state.setActive(logic.hasMultipleCategories());
+				}
+			},
+			buttonSize
+		);
+		previousRecipeCategory = new IconButton(
+			new IIconButtonController() {
+				@Override
+				public boolean onPress(IJeiUserInput input) {
+					return input.isSimulate() || logic.previousRecipeCategory();
+				}
+
+				@Override
+				public void initState(IButtonState state) {
+					state.setIcon(arrowPrevious);
+					updateState(state);
+				}
+
+				@Override
+				public void updateState(IButtonState state) {
+					state.setActive(logic.hasMultipleCategories());
+				}
+			},
+			buttonSize
+		);
+		nextPage = new IconButton(
+			new IIconButtonController() {
+				@Override
+				public boolean onPress(IJeiUserInput input) {
+					return input.isSimulate() || logic.nextPage();
+				}
+
+				@Override
+				public void initState(IButtonState state) {
+					state.setIcon(arrowNext);
+					updateState(state);
+				}
+
+				@Override
+				public void updateState(IButtonState state) {
+					state.setActive(logic.hasMultiplePages());
+				}
+			},
+			buttonSize
+		);
+		previousPage = new IconButton(
+			new IIconButtonController() {
+				@Override
+				public boolean onPress(IJeiUserInput input) {
+					return input.isSimulate() || logic.previousPage();
+				}
+
+				@Override
+				public void initState(IButtonState state) {
+					state.setIcon(arrowPrevious);
+					updateState(state);
+				}
+
+				@Override
+				public void updateState(IButtonState state) {
+					state.setActive(logic.hasMultiplePages());
+				}
+			},
+			buttonSize
+		);
 
 		background = textures.getRecipeGuiBackground();
 
@@ -206,16 +287,12 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 
 		int titleHeight = font.lineHeight + borderPadding;
 		int recipeClassButtonTop = guiTop + titleHeight - smallButtonHeight + navBarPadding;
-		nextRecipeCategory.setX(rightButtonX);
-		nextRecipeCategory.setY(recipeClassButtonTop);
-		previousRecipeCategory.setX(leftButtonX);
-		previousRecipeCategory.setY(recipeClassButtonTop);
+		nextRecipeCategory.updateBounds(nextRecipeCategory.getArea().setPosition(rightButtonX, recipeClassButtonTop));
+		previousRecipeCategory.updateBounds(previousRecipeCategory.getArea().setPosition(leftButtonX, recipeClassButtonTop));
 
 		int pageButtonTop = recipeClassButtonTop + smallButtonHeight + navBarPadding;
-		nextPage.setX(rightButtonX);
-		nextPage.setY(pageButtonTop);
-		previousPage.setX(leftButtonX);
-		previousPage.setY(pageButtonTop);
+		nextPage.updateBounds(nextPage.getArea().setPosition(rightButtonX, pageButtonTop));
+		previousPage.updateBounds(previousPage.getArea().setPosition(leftButtonX, pageButtonTop));
 
 		this.headerHeight = (pageButtonTop + smallButtonHeight) - guiTop;
 
@@ -258,10 +335,10 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 		ImmutableRect2i pageArea = MathUtil.union(previousPage.getArea(), nextPage.getArea());
 		StringUtil.drawCenteredStringWithShadow(guiGraphics, font, pageString, pageArea);
 
-		nextRecipeCategory.render(guiGraphics, mouseX, mouseY, partialTicks);
-		previousRecipeCategory.render(guiGraphics, mouseX, mouseY, partialTicks);
-		nextPage.render(guiGraphics, mouseX, mouseY, partialTicks);
-		previousPage.render(guiGraphics, mouseX, mouseY, partialTicks);
+		nextRecipeCategory.draw(guiGraphics, mouseX, mouseY, partialTicks);
+		previousRecipeCategory.draw(guiGraphics, mouseX, mouseY, partialTicks);
+		nextPage.draw(guiGraphics, mouseX, mouseY, partialTicks);
+		previousPage.draw(guiGraphics, mouseX, mouseY, partialTicks);
 
 		Optional<IRecipeLayoutDrawable<?>> hoveredRecipeLayout = this.layouts.draw(guiGraphics, mouseX, mouseY);
 		optionButtons.draw(guiGraphics, mouseX, mouseY, partialTicks);
@@ -346,12 +423,9 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 	public void tick() {
 		super.tick();
 
-		AbstractContainerMenu container = getParentContainerMenu();
-		this.layouts.tick(container);
-
+		this.layouts.tick();
 		this.optionButtons.tick();
-
-		this.logic.tick(container);
+		this.logic.tick();
 	}
 
 	@Override
@@ -516,7 +590,7 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 		final int availableHeight = recipeLayoutsArea.getHeight();
 
 		AbstractContainerMenu containerMenu = getParentContainerMenu();
-		List<RecipeLayoutWithButtons<?>> recipeLayoutsWithButtons = logic.getVisibleRecipeLayoutsWithButtons(
+		List<IRecipeLayoutWithButtons<?>> recipeLayoutsWithButtons = logic.getVisibleRecipeLayoutsWithButtons(
 			availableHeight,
 			minRecipePadding,
 			containerMenu,
@@ -526,14 +600,16 @@ public class RecipesGui extends Screen implements IRecipesGui, IRecipeFocusSourc
 		int recipesPerPage = this.logic.getRecipesPerPage();
 
 		this.layouts.setRecipeLayoutsWithButtons(recipeLayoutsWithButtons);
-		this.layouts.tick(containerMenu);
+		this.layouts.tick();
 		this.area = calculateAreaToFitLayouts(this.idealArea, this.width, this.layouts.getWidth());
 		recipeLayoutsArea = getRecipeLayoutsArea();
 
 		this.layouts.updateLayout(recipeLayoutsArea, recipesPerPage);
 
-		nextPage.active = previousPage.active = logic.hasMultiplePages();
-		nextRecipeCategory.active = previousRecipeCategory.active = logic.hasMultipleCategories();
+		this.nextRecipeCategory.tick();
+		this.previousRecipeCategory.tick();
+		this.nextPage.tick();
+		this.previousPage.tick();
 
 		pageString = logic.getPageString();
 

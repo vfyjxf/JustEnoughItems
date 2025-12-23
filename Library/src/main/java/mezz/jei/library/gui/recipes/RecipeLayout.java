@@ -32,9 +32,11 @@ import mezz.jei.common.gui.elements.DrawableCombined;
 import mezz.jei.common.gui.elements.OffsetDrawable;
 import mezz.jei.common.gui.elements.TextWidget;
 import mezz.jei.common.gui.textures.Textures;
+import mezz.jei.common.util.ErrorUtil;
 import mezz.jei.common.util.ImmutablePoint2i;
 import mezz.jei.common.util.ImmutableRect2i;
 import mezz.jei.common.util.MathUtil;
+import mezz.jei.core.util.LimitedLogger;
 import mezz.jei.library.gui.ingredients.CycleTicker;
 import mezz.jei.library.gui.recipes.layout.builder.RecipeLayoutBuilder;
 import mezz.jei.library.gui.widgets.ScrollBoxRecipeWidget;
@@ -43,11 +45,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.navigation.ScreenPosition;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.FormattedText;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -56,6 +60,8 @@ import java.util.Optional;
 
 public class RecipeLayout<R> implements IRecipeLayoutDrawable<R>, IRecipeExtrasBuilder {
 	private static final Logger LOGGER = LogManager.getLogger();
+	private static final LimitedLogger LIMITED_LOGGER = new LimitedLogger(LOGGER, Duration.ofSeconds(10));
+
 	public static final int RECIPE_BUTTON_SIZE = 13;
 	public static final int RECIPE_BUTTON_SPACING = 2;
 
@@ -104,7 +110,8 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable<R>, IRecipeExtrasB
 			);
 			return Optional.of(recipeLayout);
 		} catch (RuntimeException | LinkageError e) {
-			LOGGER.error("Error caught from Recipe Category: {}", recipeCategory.getRecipeType(), e);
+			String recipeInfo = ErrorUtil.getRecipeInfo(recipeCategory, recipe);
+			LOGGER.error("Recipe crashed during Recipe Layout creation:\n{}", recipeInfo, e);
 		}
 		return Optional.empty();
 	}
@@ -272,9 +279,23 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable<R>, IRecipeExtrasB
 			hoveredSlot.drawTooltip(guiGraphics, mouseX, mouseY);
 		} else if (isMouseOver(mouseX, mouseY)) {
 			JeiTooltip tooltip = new JeiTooltip();
-			recipeCategory.getTooltip(tooltip, recipe, recipeCategorySlotsView, recipeMouseX, recipeMouseY);
-			for (IRecipeCategoryDecorator<R> decorator : recipeCategoryDecorators) {
-				decorator.decorateTooltips(tooltip, recipe, recipeCategory, recipeCategorySlotsView, recipeMouseX, recipeMouseY);
+			try {
+				recipeCategory.getTooltip(tooltip, recipe, recipeCategorySlotsView, recipeMouseX, recipeMouseY);
+				for (IRecipeCategoryDecorator<R> decorator : recipeCategoryDecorators) {
+					decorator.decorateTooltips(tooltip, recipe, recipeCategory, recipeCategorySlotsView, recipeMouseX, recipeMouseY);
+				}
+			} catch (RuntimeException e) {
+				LIMITED_LOGGER.log(
+					Level.ERROR,
+					"recipe.category.tooltip.crash",
+					logger -> {
+						logger.error(
+							"Error while getting tooltip from recipe:\n{}",
+							ErrorUtil.getRecipeInfo(recipeCategory, recipe),
+							e
+						);
+					}
+				);
 			}
 
 			for (IRecipeWidget widget : allWidgets) {
@@ -349,14 +370,12 @@ public class RecipeLayout<R> implements IRecipeLayoutDrawable<R>, IRecipeExtrasB
 	}
 
 	@Override
-	public Rect2i getRecipeTransferButtonArea() {
-		return recipeTransferButtonArea.toMutable();
-	}
-
-	@Override
-	public Rect2i getRecipeBookmarkButtonArea() {
-		Rect2i area = getRecipeTransferButtonArea();
-		area.setPosition(area.getX(), area.getY() - area.getHeight() - RECIPE_BUTTON_SPACING);
+	public Rect2i getSideButtonArea(int buttonIndex) {
+		Rect2i area = recipeTransferButtonArea.toMutable();
+		if (buttonIndex > 0) {
+			int offset = buttonIndex * (area.getHeight() + RECIPE_BUTTON_SPACING);
+			area.setY(area.getY() - offset);
+		}
 		return area;
 	}
 

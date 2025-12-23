@@ -1,4 +1,4 @@
-package mezz.jei.library.gui.recipes.layout;
+package mezz.jei.common.gui;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import mezz.jei.api.gui.IRecipeLayoutDrawable;
@@ -14,7 +14,6 @@ import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.common.Internal;
-import mezz.jei.library.gui.OffsetJeiInputHandler;
 import mezz.jei.common.util.ImmutableRect2i;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
@@ -46,13 +45,12 @@ public class RecipeLayoutDrawableErrored<R> implements IRecipeLayoutDrawable<R> 
 
 		List<FormattedText> lines = new ArrayList<>();
 		lines.add(Component.translatable("gui.jei.category.recipe.crashed").withStyle(ChatFormatting.RED));
-		lines.add(Component.empty());
-		lines.add(Component.literal(recipeCategory.getRecipeType().getUid().toString()).withStyle(ChatFormatting.GRAY));
 		ResourceLocation registryName = recipeCategory.getRegistryName(recipe);
 		if (registryName != null) {
-			lines.add(Component.empty());
 			lines.add(Component.literal(registryName.toString()).withStyle(ChatFormatting.GRAY));
 		}
+		lines.add(Component.empty());
+		lines.add(Component.literal(recipeCategory.getRecipeType().getUid().toString()).withStyle(ChatFormatting.GRAY));
 
 		IJeiRuntime jeiRuntime = Internal.getJeiRuntime();
 		IJeiHelpers jeiHelpers = jeiRuntime.getJeiHelpers();
@@ -88,6 +86,7 @@ public class RecipeLayoutDrawableErrored<R> implements IRecipeLayoutDrawable<R> 
 				poseStack.translate(position.x(), position.y(), 0);
 				scrollBoxWidget.drawWidget(guiGraphics, recipeMouseX - position.x(), recipeMouseY - position.y());
 			}
+			poseStack.popPose();
 		}
 		poseStack.popPose();
 	}
@@ -128,12 +127,7 @@ public class RecipeLayoutDrawableErrored<R> implements IRecipeLayoutDrawable<R> 
 	}
 
 	@Override
-	public Rect2i getRecipeTransferButtonArea() {
-		return new Rect2i(0, 0, 0, 0);
-	}
-
-	@Override
-	public Rect2i getRecipeBookmarkButtonArea() {
+	public Rect2i getSideButtonArea(int buttonIndex) {
 		return new Rect2i(0, 0, 0, 0);
 	}
 

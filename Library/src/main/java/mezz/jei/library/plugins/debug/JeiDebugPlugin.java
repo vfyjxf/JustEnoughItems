@@ -5,12 +5,18 @@ import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.ModIds;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.builder.IClickableIngredientFactory;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
+import mezz.jei.api.gui.buttons.IButtonState;
+import mezz.jei.api.gui.buttons.IIconButtonController;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
+import mezz.jei.api.gui.inputs.IJeiUserInput;
 import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.helpers.IJeiHelpers;
 import mezz.jei.api.helpers.IPlatformFluidHelper;
 import mezz.jei.api.ingredients.IIngredientTypeWithSubtypes;
+import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import mezz.jei.api.registration.IAdvancedRegistration;
 import mezz.jei.api.registration.IExtraIngredientRegistration;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
@@ -62,6 +68,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -160,7 +167,8 @@ public class JeiDebugPlugin implements IModPlugin {
 			registration.addRecipeCategories(
 				debugRecipeCategory,
 				new DebugFocusRecipeCategory<>(platformFluidHelper),
-				new ObnoxiouslyLargeCategory(guiHelper, textures, ingredientManager)
+				new ObnoxiouslyLargeCategory(guiHelper, textures, ingredientManager),
+				new ErrorRecipeCategory()
 			);
 		}
 	}
@@ -231,6 +239,10 @@ public class JeiDebugPlugin implements IModPlugin {
 			));
 
 			registration.addRecipes(ObnoxiouslyLargeCategory.TYPE, List.of(new ObnoxiouslyLargeRecipe()));
+
+			if (DebugConfig.isCrashingTestRecipesEnabled()) {
+				registration.addRecipes(ErrorRecipeCategory.TYPE, Arrays.stream(ErrorRecipe.CrashType.values()).map(ErrorRecipe::new).toList());
+			}
 		}
 	}
 
@@ -324,6 +336,27 @@ public class JeiDebugPlugin implements IModPlugin {
 				.forEach(r -> registration.addRecipeCategoryDecorator(r, DebugCategoryDecorator.getInstance()));
 
 			registration.addTypedRecipeManagerPlugin(RecipeTypes.CRAFTING, new DebugSimpleRecipeManagerPlugin(jeiHelpers));
+			registration.addRecipeButtonFactory(new IRecipeButtonControllerFactory() {
+				@Override
+				public <T> IIconButtonController createButtonController(IRecipeLayoutDrawable<T> recipeLayoutDrawable) {
+					return new IIconButtonController() {
+						@Override
+						public void initState(IButtonState state) {
+							state.setIcon(Internal.getTextures().getShapelessIcon());
+						}
+
+						@Override
+						public boolean onPress(IJeiUserInput input) {
+							return false;
+						}
+
+						@Override
+						public void getTooltips(ITooltipBuilder tooltip) {
+							tooltip.add(Component.literal("Debug Button"));
+						}
+					};
+				}
+			});
 		}
 	}
 

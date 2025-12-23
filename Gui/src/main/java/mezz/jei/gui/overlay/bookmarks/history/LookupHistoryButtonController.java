@@ -1,34 +1,30 @@
 package mezz.jei.gui.overlay.bookmarks.history;
 
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
-import mezz.jei.api.gui.drawable.IDrawableStatic;
+import mezz.jei.api.gui.inputs.IJeiUserInput;
 import mezz.jei.common.Internal;
 import mezz.jei.common.config.IClientConfig;
-import mezz.jei.common.gui.JeiTooltip;
 import mezz.jei.common.gui.textures.Textures;
-import mezz.jei.gui.elements.GuiIconToggleButton;
-import mezz.jei.gui.input.UserInput;
+import mezz.jei.api.gui.buttons.IButtonState;
+import mezz.jei.api.gui.buttons.IIconButtonController;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-public class LookupHistoryButton extends GuiIconToggleButton {
-
-	public static LookupHistoryButton create(IClientConfig clientConfig) {
-		Textures textures = Internal.getTextures();
-		IDrawableStatic offIcon = textures.getHistoryButtonDisabledIcon();
-		IDrawableStatic onIcon = textures.getHistoryButtonEnabledICon();
-		return new LookupHistoryButton(offIcon, onIcon, clientConfig);
-	}
-
+public class LookupHistoryButtonController implements IIconButtonController {
+	private final IDrawable offIcon;
+	private final IDrawable onIcon;
 	private final IClientConfig clientConfig;
 
-	private LookupHistoryButton(IDrawable offIcon, IDrawable onIcon, IClientConfig clientConfig) {
-		super(offIcon, onIcon);
+	public LookupHistoryButtonController(IClientConfig clientConfig) {
+		Textures textures = Internal.getTextures();
+		this.offIcon = textures.getHistoryButtonDisabledIcon();
+		this.onIcon = textures.getHistoryButtonEnabledIcon();
 		this.clientConfig = clientConfig;
 	}
 
 	@Override
-	protected void getTooltips(JeiTooltip tooltip) {
+	public void getTooltips(ITooltipBuilder tooltip) {
 		if (clientConfig.isLookupHistoryEnabled()) {
 			tooltip.add(Component.translatable("jei.tooltip.lookupHistory.disable"));
 		} else {
@@ -42,12 +38,17 @@ public class LookupHistoryButton extends GuiIconToggleButton {
 	}
 
 	@Override
-	protected boolean isIconToggledOn() {
-		return clientConfig.isLookupHistoryEnabled();
+	public void updateState(IButtonState state) {
+		state.setForcePressed(clientConfig.isLookupHistoryEnabled());
+		if (clientConfig.isLookupHistoryEnabled()) {
+			state.setIcon(onIcon);
+		} else {
+			state.setIcon(offIcon);
+		}
 	}
 
 	@Override
-	protected boolean onMouseClicked(UserInput input) {
+	public boolean onPress(IJeiUserInput input) {
 		if (!input.isSimulate()) {
 			clientConfig.setLookupHistoryEnabled(!clientConfig.isLookupHistoryEnabled());
 		}
