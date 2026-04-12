@@ -7,12 +7,11 @@ import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IIngredientVisibility;
-import mezz.jei.common.config.DebugConfig;
-import mezz.jei.common.config.IClientConfig;
-import mezz.jei.common.config.IClientToggleState;
-import mezz.jei.common.config.IIngredientFilterConfig;
+import mezz.jei.common.config.*;
+import mezz.jei.common.ingredients.group.IngredientGroupInfo;
 import mezz.jei.gui.filter.IFilterTextSource;
 import mezz.jei.gui.overlay.IIngredientGridSource;
+import mezz.jei.gui.overlay.elements.GroupElement;
 import mezz.jei.gui.overlay.elements.IElement;
 import mezz.jei.gui.overlay.elements.IngredientElement;
 import mezz.jei.gui.search.ElementPrefixParser;
@@ -23,15 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -50,6 +41,7 @@ public class IngredientFilter implements
 	private final IFilterTextSource filterTextSource;
 	private final IIngredientManager ingredientManager;
 	private final Comparator<IListElement<?>> ingredientComparator;
+	private final IngredientGroupConfig ingredientGroupConfig;
 	private final IModIdHelper modIdHelper;
 	private final IIngredientVisibility ingredientVisibility;
 
@@ -58,6 +50,7 @@ public class IngredientFilter implements
 
 	@Nullable
 	private List<IElement<?>> ingredientListCached;
+	private final Map<IngredientGroupInfo, ListGroupElementInfo> groupElementInfos = new IdentityHashMap<>();
 	private final List<SourceListChangedListener> listeners = new ArrayList<>();
 
 	public IngredientFilter(
@@ -67,6 +60,7 @@ public class IngredientFilter implements
 		IIngredientManager ingredientManager,
 		Comparator<IListElement<?>> ingredientComparator,
 		List<IListElementInfo<?>> ingredients,
+		IngredientGroupConfig groupConfig,
 		IModIdHelper modIdHelper,
 		IIngredientVisibility ingredientVisibility,
 		IColorHelper colorHelper,
@@ -76,6 +70,7 @@ public class IngredientFilter implements
 		this.clientConfig = clientConfig;
 		this.ingredientManager = ingredientManager;
 		this.ingredientComparator = ingredientComparator;
+		this.ingredientGroupConfig = groupConfig;
 		this.modIdHelper = modIdHelper;
 		this.ingredientVisibility = ingredientVisibility;
 		this.elementPrefixParser = new ElementPrefixParser(ingredientManager, config, colorHelper, modIdHelper);
@@ -86,6 +81,13 @@ public class IngredientFilter implements
 		for (IListElementInfo<?> ingredient : ingredients) {
 			addIngredient(ingredient);
 		}
+
+		for (IngredientGroupInfo groupInfo : groupConfig.getIngredientGroups().values()) {
+			ListGroupElementInfo info = new ListGroupElementInfo(groupInfo, modIdHelper);
+			groupElementInfos.put(groupInfo, info);
+			addIngredient(info);
+		}
+
 		LOGGER.info("Added {} ingredients", ingredients.size());
 		if (DebugConfig.isLogSuffixTreeStatsEnabled()) {
 			this.elementSearch.logStatistics();
@@ -171,9 +173,18 @@ public class IngredientFilter implements
 		String filterText = this.filterTextSource.getFilterText();
 		filterText = filterText.toLowerCase();
 		if (ingredientListCached == null) {
+			Runnable invalidateCacheAndNotify = () -> {
+				invalidateCache();
+				notifyListenersOfChange();
+			};
 			ingredientListCached = getIngredientListUncached(filterText)
-				.<IElement<?>>map(IngredientElement::new)
-				.toList();
+					.<IElement<?>>map(element -> {
+						if (element instanceof ListGroupElement groupElement) {
+							return new GroupElement(groupElement, invalidateCacheAndNotify);
+						}
+						return new IngredientElement<>(element.getTypedIngredient());
+					})
+					.toList();
 		}
 		return ingredientListCached;
 	}
@@ -187,7 +198,7 @@ public class IngredientFilter implements
 			.toList();
 	}
 
-	private Stream<ITypedIngredient<?>> getIngredientListUncached(String filterText) {
+	private Stream<IListElement<?>> getIngredientListUncached(String filterText) {
 		String[] filters = filterText.split("\\|");
 		List<SearchTokens> searchTokens = Arrays.stream(filters)
 			.map(this::parseSearchTokens)
@@ -195,6 +206,7 @@ public class IngredientFilter implements
 			.toList();
 
 		Stream<IListElement<?>> elementStream;
+
 		if (searchTokens.isEmpty()) {
 			elementStream = this.elementSearch.getAllIngredients()
 				.parallelStream();
@@ -205,10 +217,33 @@ public class IngredientFilter implements
 				.distinct();
 		}
 
-		return elementStream
-			.filter(IListElement::isVisible)
-			.sorted(ingredientComparator)
-			.map(IListElement::getTypedIngredient);
+		Stream<IListElement<?>> searchResult = elementStream
+				.filter(IListElement::isVisible)
+				.sorted(ingredientComparator);
+		var ingredientGroups = ingredientGroupConfig.getIngredientGroups().values();
+		IdentityHashMap<IngredientGroupInfo, ListGroupElement> groupElements = new IdentityHashMap<>();
+		List<IListElement<?>> groupedElements = new ArrayList<>();
+		searchResult.forEach(element -> {
+			boolean inGroup = false;
+			for (var group : ingredientGroups) {
+				if (group.isGroupMember(element.getTypedIngredient(), ingredientManager)) {
+					ListGroupElementInfo info = groupElementInfos.get(group);
+					ListGroupElement groupElement = groupElements.get(group);
+					if (groupElement == null) {
+						groupElement = new ListGroupElement(group);
+						groupElements.put(group, groupElement);
+						groupedElements.add(groupElement);
+					}
+					groupElement.addElement(element);
+					inGroup = true;
+				}
+			}
+			if (!inGroup) {
+				groupedElements.add(element);
+			}
+		});
+		return groupedElements.stream()
+							  .sorted(ingredientComparator);
 	}
 
 	@Override

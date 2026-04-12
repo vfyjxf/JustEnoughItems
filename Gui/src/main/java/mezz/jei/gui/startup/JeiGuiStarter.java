@@ -15,11 +15,7 @@ import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IIngredientVisibility;
 import mezz.jei.api.runtime.IScreenHelper;
 import mezz.jei.common.Internal;
-import mezz.jei.common.config.IClientConfig;
-import mezz.jei.common.config.IClientToggleState;
-import mezz.jei.common.config.IIngredientFilterConfig;
-import mezz.jei.common.config.IIngredientGridConfig;
-import mezz.jei.common.config.IJeiClientConfigs;
+import mezz.jei.common.config.*;
 import mezz.jei.common.gui.textures.Textures;
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.common.network.IConnectionToServer;
@@ -108,6 +104,7 @@ public class JeiGuiStarter {
 		IClientToggleState toggleState = Internal.getClientToggleState();
 		IBookmarkConfig bookmarkConfig = configData.bookmarkConfig();
 		ILookupHistoryConfig lookupHistoryConfig = configData.lookupHistoryConfig();
+		IngredientGroupConfig ingredientGroupConfig = Internal.getIngredientGroupConfig();
 
 		IJeiClientConfigs jeiClientConfigs = Internal.getJeiClientConfigs();
 		IClientConfig clientConfig = jeiClientConfigs.getClientConfig();
@@ -130,6 +127,7 @@ public class JeiGuiStarter {
 			ingredientManager,
 			ingredientComparator,
 			ingredientList,
+			ingredientGroupConfig,
 			modIdHelper,
 			ingredientVisibility,
 			colorHelper,
@@ -164,7 +162,8 @@ public class JeiGuiStarter {
 			serverConnection,
 			ingredientFilterConfig,
 			textures,
-			colorHelper
+			colorHelper,
+			modIdHelper
 		);
 		registration.setIngredientListOverlay(ingredientListOverlay);
 
@@ -183,7 +182,8 @@ public class JeiGuiStarter {
 			toggleState,
 			serverConnection,
 			textures,
-			colorHelper
+			colorHelper,
+			modIdHelper
 		);
 		registration.setBookmarkOverlay(bookmarkOverlay);
 

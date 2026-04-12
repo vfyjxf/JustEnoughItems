@@ -9,6 +9,7 @@ import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IIngredientVisibility;
 import mezz.jei.common.config.IClientConfig;
 import mezz.jei.common.config.IClientToggleState;
+import mezz.jei.common.config.IngredientGroupConfig;
 import mezz.jei.gui.filter.FilterTextSource;
 import mezz.jei.gui.filter.IFilterTextSource;
 import mezz.jei.gui.ingredients.IListElementInfo;
@@ -16,6 +17,8 @@ import mezz.jei.gui.ingredients.IngredientFilter;
 import mezz.jei.gui.ingredients.IngredientListElementFactory;
 import mezz.jei.gui.ingredients.ListElementInfo;
 import mezz.jei.library.config.EditModeConfig;
+import mezz.jei.library.focus.FocusFactory;
+import mezz.jei.library.helpers.CodecHelper;
 import mezz.jei.library.ingredients.IngredientBlacklistInternal;
 import mezz.jei.library.ingredients.IngredientVisibility;
 import mezz.jei.library.ingredients.subtypes.SubtypeInterpreters;
@@ -36,6 +39,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -50,6 +54,8 @@ public class IngredientFilterTest {
 	private IngredientFilter ingredientFilter;
 	@Nullable
 	private IIngredientVisibility ingredientVisibility;
+	@Nullable
+	private IngredientGroupConfig ingredientGroupConfig;
 	@Nullable
 	private List<IListElementInfo<?>> baseList;
 	@Nullable
@@ -77,6 +83,7 @@ public class IngredientFilterTest {
 
 		this.baseList = IngredientListElementFactory.createBaseList(ingredientManager, modIdHelper);
 
+		this.ingredientGroupConfig = new IngredientGroupConfig(new CodecHelper(ingredientManager,new FocusFactory(ingredientManager)), ingredientManager, Paths.get(""));
 		this.editModeConfig = new EditModeConfig(new NullSerializer(), ingredientManager);
 
 		IClientToggleState toggleState = new TestClientToggleState();
@@ -91,6 +98,7 @@ public class IngredientFilterTest {
 			ingredientManager,
 			Comparator.comparingInt(Object::hashCode),
 			baseList,
+			ingredientGroupConfig,
 			modIdHelper,
 			ingredientVisibility,
 			colorHelper,

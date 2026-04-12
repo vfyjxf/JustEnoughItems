@@ -1,6 +1,7 @@
 package mezz.jei.gui.overlay.bookmarks.history;
 
 import mezz.jei.api.helpers.IColorHelper;
+import mezz.jei.api.helpers.IModIdHelper;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IScreenHelper;
 import mezz.jei.common.config.HistoryDisplaySide;
@@ -56,7 +57,8 @@ public class LookupHistoryOverlay implements IRecipeFocusSource {
 			IClientToggleState toggleState,
 			IScreenHelper screenHelper,
 			IConnectionToServer serverConnection,
-			IColorHelper colorHelper
+			IColorHelper colorHelper,
+			IModIdHelper modIdHelper
 	) {
 		this.clientConfig = clientConfig;
 		this.lookupHistory = lookupHistory;
@@ -69,6 +71,7 @@ public class LookupHistoryOverlay implements IRecipeFocusSource {
 				serverConnection,
 				keyMappings,
 				colorHelper,
+				modIdHelper,
 				false
 		);
 		this.ghostIngredientDragManager = new GhostIngredientDragManager(this.contents, screenHelper, ingredientManager, toggleState);

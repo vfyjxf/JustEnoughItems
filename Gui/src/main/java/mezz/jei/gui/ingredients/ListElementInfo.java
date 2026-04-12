@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 
 public class ListElementInfo<V> implements IListElementInfo<V> {
 	private static final Logger LOGGER = LogManager.getLogger();
-	private static int elementCount = 0;
+	static int elementCount = 0;
 
 	private final IListElement<V> element;
 	private final List<String> names;

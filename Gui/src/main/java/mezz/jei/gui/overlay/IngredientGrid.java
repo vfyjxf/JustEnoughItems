@@ -2,6 +2,7 @@ package mezz.jei.gui.overlay;
 
 import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.helpers.IColorHelper;
+import mezz.jei.api.helpers.IModIdHelper;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
@@ -69,13 +70,14 @@ public class IngredientGrid implements IRecipeFocusSource, IIngredientGrid {
 		IConnectionToServer serverConnection,
 		IInternalKeyMappings keyBindings,
 		IColorHelper colorHelper,
+		IModIdHelper modIdHelper,
 		boolean searchable
 	) {
 		this.ingredientManager = ingredientManager;
 		this.gridConfig = gridConfig;
 		this.searchable = searchable;
 		this.ingredientListRenderer = new IngredientListRenderer(ingredientManager, searchable);
-		this.tooltipHelper = new IngredientGridTooltipHelper(ingredientManager, ingredientFilterConfig, toggleState, keyBindings, colorHelper);
+		this.tooltipHelper = new IngredientGridTooltipHelper(ingredientManager, ingredientFilterConfig, toggleState, keyBindings, colorHelper, modIdHelper);
 		this.deleteItemHandler = new DeleteItemInputHandler(this, toggleState, clientConfig, serverConnection, ingredientManager);
 	}
 

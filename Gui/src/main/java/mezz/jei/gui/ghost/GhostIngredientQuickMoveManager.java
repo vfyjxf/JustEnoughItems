@@ -47,7 +47,8 @@ public class GhostIngredientQuickMoveManager {
 				.flatMap(clicked -> {
 					ItemStack mouseItem = player.containerMenu.getCarried();
 					if (mouseItem.isEmpty()) {
-						if (input.isSimulate() || quickMoveInternal(screen, clicked)) {
+						if (!screenHelper.getGhostIngredientHandlers(screen).isEmpty() &&
+								(input.isSimulate() || quickMoveInternal(screen, clicked))) {
 							return Optional.of(true);
 						}
 					}
