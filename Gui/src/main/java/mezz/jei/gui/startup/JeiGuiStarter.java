@@ -15,12 +15,9 @@ import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IIngredientVisibility;
 import mezz.jei.api.runtime.IScreenHelper;
 import mezz.jei.common.Internal;
-import mezz.jei.common.config.IClientConfig;
-import mezz.jei.common.config.IClientToggleState;
-import mezz.jei.common.config.IIngredientFilterConfig;
-import mezz.jei.common.config.IIngredientGridConfig;
-import mezz.jei.common.config.IJeiClientConfigs;
+import mezz.jei.common.config.*;
 import mezz.jei.common.gui.textures.Textures;
+import mezz.jei.common.ingredients.group.IngredientGroupInfo;
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.common.network.IConnectionToServer;
 import mezz.jei.common.util.ErrorUtil;
@@ -39,6 +36,7 @@ import mezz.jei.gui.ingredients.IngredientFilter;
 import mezz.jei.gui.ingredients.IngredientFilterApi;
 import mezz.jei.gui.ingredients.IngredientListElementFactory;
 import mezz.jei.gui.ingredients.IngredientSorter;
+import mezz.jei.gui.ingredients.ListGroupElementInfo;
 import mezz.jei.gui.input.ClientInputHandler;
 import mezz.jei.gui.input.CombinedRecipeFocusSource;
 import mezz.jei.gui.input.GuiContainerWrapper;
@@ -97,7 +95,7 @@ public class JeiGuiStarter {
 		RegistryAccess registryAccess = level.registryAccess();
 
 		timer.start("Building ingredient list");
-		List<IListElementInfo<?>> ingredientList = IngredientListElementFactory.createBaseList(ingredientManager, modIdHelper);
+		List<IListElementInfo> ingredientList = IngredientListElementFactory.createBaseList(ingredientManager, modIdHelper);
 		timer.stop();
 
 		timer.start("Building ingredient filter");
@@ -108,6 +106,7 @@ public class JeiGuiStarter {
 		IClientToggleState toggleState = Internal.getClientToggleState();
 		IBookmarkConfig bookmarkConfig = configData.bookmarkConfig();
 		ILookupHistoryConfig lookupHistoryConfig = configData.lookupHistoryConfig();
+		IngredientGroupConfig ingredientGroupConfig = Internal.getIngredientGroupConfig();
 
 		IJeiClientConfigs jeiClientConfigs = Internal.getJeiClientConfigs();
 		IClientConfig clientConfig = jeiClientConfigs.getClientConfig();
@@ -115,7 +114,11 @@ public class JeiGuiStarter {
 		IIngredientGridConfig bookmarkListConfig = jeiClientConfigs.getBookmarkListConfig();
 		IIngredientFilterConfig ingredientFilterConfig = jeiClientConfigs.getIngredientFilterConfig();
 
-		Comparator<IListElement<?>> ingredientComparator = IngredientSorter.sortIngredients(
+		for (IngredientGroupInfo groupInfo : ingredientGroupConfig.getIngredientGroups().values()) {
+			ListGroupElementInfo groupElementInfo = new ListGroupElementInfo(groupInfo, modIdHelper);
+			ingredientList.add(groupElementInfo);
+		}
+		Comparator<IListElement> ingredientComparator = IngredientSorter.sortIngredients(
 			clientConfig,
 			modNameSortingConfig,
 			ingredientTypeSortingConfig,
@@ -130,6 +133,7 @@ public class JeiGuiStarter {
 			ingredientManager,
 			ingredientComparator,
 			ingredientList,
+			ingredientGroupConfig,
 			modIdHelper,
 			ingredientVisibility,
 			colorHelper,
@@ -164,7 +168,8 @@ public class JeiGuiStarter {
 			serverConnection,
 			ingredientFilterConfig,
 			textures,
-			colorHelper
+			colorHelper,
+			modIdHelper
 		);
 		registration.setIngredientListOverlay(ingredientListOverlay);
 
@@ -183,7 +188,8 @@ public class JeiGuiStarter {
 			toggleState,
 			serverConnection,
 			textures,
-			colorHelper
+			colorHelper,
+			modIdHelper
 		);
 		registration.setBookmarkOverlay(bookmarkOverlay);
 
