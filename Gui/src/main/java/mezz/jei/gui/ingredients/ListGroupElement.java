@@ -6,54 +6,61 @@ import mezz.jei.common.ingredients.group.IngredientGroupInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings("rawtypes")
 public final class ListGroupElement implements IListElement {
 	private final IngredientGroupInfo groupInfo;
 	private final int createdIndex;
-	private final List<IListElement<?>> elements = new ArrayList<>();
+	private final List<IListElement> members;
 
-	public ListGroupElement(
-			IngredientGroupInfo groupInfo
-	) {
+	public ListGroupElement(IngredientGroupInfo groupInfo, List<IListElement> members) {
 		this.groupInfo = groupInfo;
 		this.createdIndex = ListElementInfo.elementCount++;
+		this.members = new ArrayList<>(members);
 	}
 
-	public void addElement(IListElement<?> element) {
-		this.elements.add(element);
+	public void addMember(IListElement member) {
+		this.members.add(member);
+	}
+
+	public IngredientGroupInfo getGroupInfo() {
+		return groupInfo;
+	}
+
+	public List<IListElement> getMembers() {
+		return members;
 	}
 
 	@Override
-	public ITypedIngredient getTypedIngredient() {
-		return elements.getFirst().getTypedIngredient();
+	public ITypedIngredient<?> getTypedIngredient() {
+		return members.getFirst().getTypedIngredient();
 	}
 
 	@Override
 	public int getSortedIndex() {
-		return elements.getFirst().getSortedIndex();
+		if (members.isEmpty()) {
+			return createdIndex;
+		}
+		return members.stream()
+					  .mapToInt(IListElement::getSortedIndex)
+					  .min()
+					  .orElse(createdIndex);
 	}
 
 	@Override
 	public void setSortedIndex(int sortIndex) {
-		elements.getFirst().setSortedIndex(sortIndex);
+		// Group sort index derived from members, no-op
 	}
-
-	@Override
-	public boolean isVisible() {
-		return true;
-	}
-
-	@Override
-	public void setVisible(boolean visible) {
-		//NOOP
-	}
-
-	public IngredientGroupInfo groupInfo() {return groupInfo;}
-
-	public List<? extends IListElement<?>> elements() {return elements;}
 
 	@Override
 	public int getCreatedIndex() {
 		return createdIndex;
+	}
+
+	@Override
+	public boolean isVisible() {
+		return members.stream().anyMatch(IListElement::isVisible);
+	}
+
+	@Override
+	public void setVisible(boolean visible) {
 	}
 }

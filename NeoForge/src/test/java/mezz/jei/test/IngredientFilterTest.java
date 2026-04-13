@@ -57,7 +57,7 @@ public class IngredientFilterTest {
 	@Nullable
 	private IngredientGroupConfig ingredientGroupConfig;
 	@Nullable
-	private List<IListElementInfo<?>> baseList;
+	private List<IListElementInfo> baseList;
 	@Nullable
 	private EditModeConfig editModeConfig;
 	@Nullable
@@ -175,7 +175,7 @@ public class IngredientFilterTest {
 		Assertions.assertNotNull(baseList);
 		Assertions.assertNotNull(editModeConfig);
 
-		IListElementInfo<?> elementInfo = baseList.getFirst();
+		IListElementInfo elementInfo = baseList.getFirst();
 		ITypedIngredient<?> typedIngredient = elementInfo.getTypedIngredient();
 		@SuppressWarnings("unchecked")
 		ITypedIngredient<TestIngredient> blacklistedIngredient = (ITypedIngredient<TestIngredient>) typedIngredient;
@@ -210,7 +210,7 @@ public class IngredientFilterTest {
 		IModIdHelper modIdHelper,
 		List<TestIngredient> ingredientsToAdd
 	) {
-		List<IListElementInfo<TestIngredient>> listToAdd = IngredientListElementFactory.createTestList(ingredientManager, TestIngredient.TYPE, ingredientsToAdd, modIdHelper);
+		List<IListElementInfo> listToAdd = IngredientListElementFactory.createTestList(ingredientManager, TestIngredient.TYPE, ingredientsToAdd, modIdHelper);
 		Assertions.assertEquals(EXTRA_INGREDIENT_COUNT, listToAdd.size());
 
 		ingredientManager.addIngredientsAtRuntime(TestIngredient.TYPE, ingredientsToAdd);
@@ -241,7 +241,7 @@ public class IngredientFilterTest {
 		IModIdHelper modIdHelper,
 		List<TestIngredient> ingredientsToRemove
 	) {
-		List<IListElementInfo<TestIngredient>> listToRemove = IngredientListElementFactory.createTestList(ingredientManager, TestIngredient.TYPE, ingredientsToRemove, modIdHelper);
+		List<IListElementInfo> listToRemove = IngredientListElementFactory.createTestList(ingredientManager, TestIngredient.TYPE, ingredientsToRemove, modIdHelper);
 		Assertions.assertEquals(EXTRA_INGREDIENT_COUNT, listToRemove.size());
 
 		ingredientManager.removeIngredientsAtRuntime(TestIngredient.TYPE, ingredientsToRemove);

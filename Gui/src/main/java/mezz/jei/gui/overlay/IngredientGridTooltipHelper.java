@@ -66,6 +66,20 @@ public final class IngredientGridTooltipHelper {
 		}
 	}
 
+	public void getIngredientTooltip(JeiTooltip tooltip, ITypedIngredient<?> typedIngredient) {
+		resolveAndGetTooltip(tooltip, typedIngredient);
+	}
+
+	private <T> void resolveAndGetTooltip(JeiTooltip tooltip, ITypedIngredient<T> typedIngredient) {
+		IIngredientRenderer<T> renderer = ingredientManager.getIngredientRenderer(typedIngredient.getType());
+		IIngredientHelper<T> helper = ingredientManager.getIngredientHelper(typedIngredient.getType());
+		getIngredientTooltip(tooltip, typedIngredient, renderer, helper);
+	}
+
+	public IIngredientManager getIngredientManager() {
+		return ingredientManager;
+	}
+
 	public IModIdHelper getModIdHelper() {
 		return modIdHelper;
 	}

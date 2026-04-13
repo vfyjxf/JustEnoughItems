@@ -93,7 +93,7 @@ public class JeiGuiStarter {
 		RegistryAccess registryAccess = level.registryAccess();
 
 		timer.start("Building ingredient list");
-		List<IListElementInfo<?>> ingredientList = IngredientListElementFactory.createBaseList(ingredientManager, modIdHelper);
+		List<IListElementInfo> ingredientList = IngredientListElementFactory.createBaseList(ingredientManager, modIdHelper);
 		timer.stop();
 
 		timer.start("Building ingredient filter");
@@ -112,7 +112,7 @@ public class JeiGuiStarter {
 		IIngredientGridConfig bookmarkListConfig = jeiClientConfigs.getBookmarkListConfig();
 		IIngredientFilterConfig ingredientFilterConfig = jeiClientConfigs.getIngredientFilterConfig();
 
-		Comparator<IListElement<?>> ingredientComparator = IngredientSorter.sortIngredients(
+		Comparator<IListElement> ingredientComparator = IngredientSorter.sortIngredients(
 			clientConfig,
 			modNameSortingConfig,
 			ingredientTypeSortingConfig,
