@@ -13,7 +13,6 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import java.util.List;
 
 public class GroupElementTooltipComponent implements ClientTooltipComponent, TooltipComponent {
-
 	private static final int MAX_PER_LINE = 10;
 	private static final int MAX_LINES = 3;
 	private static final int MAX_INGREDIENTS = MAX_PER_LINE * MAX_LINES;
@@ -22,10 +21,10 @@ public class GroupElementTooltipComponent implements ClientTooltipComponent, Too
 
 	private final List<? extends RenderElement<?>> elements;
 
-	public GroupElementTooltipComponent(List<? extends IElement<?>> elements) {
+	public GroupElementTooltipComponent(List<IElement> elements) {
 		IIngredientManager ingredientManager = Internal.getJeiRuntime().getIngredientManager();
 		this.elements = elements.stream()
-								.map(e -> new RenderElement<>(ingredientManager, e))
+								.map(e -> RenderElement.create(ingredientManager, e))
 								.toList();
 	}
 
@@ -38,7 +37,6 @@ public class GroupElementTooltipComponent implements ClientTooltipComponent, Too
 	public int getWidth(Font font) {
 		return getMaxPerLine() * INGREDIENT_SIZE + (2 * INGREDIENT_PADDING);
 	}
-
 
 	@Override
 	public void extractImage(Font font, int x, int y, int w, int h, GuiGraphicsExtractor graphics) {
@@ -92,9 +90,13 @@ public class GroupElementTooltipComponent implements ClientTooltipComponent, Too
 
 	private record RenderElement<T>(IIngredientRenderer<T> renderer, ITypedIngredient<T> ingredient) {
 
-		public RenderElement(IIngredientManager ingredientManager, IElement<T> element) {
-			this(ingredientManager.getIngredientRenderer(element.getTypedIngredient().getType()), element.getTypedIngredient());
+		public static RenderElement<?> create(IIngredientManager ingredientManager, IElement element) {
+			return doCreate(ingredientManager, element.getTypedIngredient());
 		}
 
+		private static <T> RenderElement<T> doCreate(IIngredientManager ingredientManager, ITypedIngredient<T> ingredient) {
+			IIngredientRenderer<T> renderer = ingredientManager.getIngredientRenderer(ingredient.getType());
+			return new RenderElement<>(renderer, ingredient);
+		}
 	}
 }

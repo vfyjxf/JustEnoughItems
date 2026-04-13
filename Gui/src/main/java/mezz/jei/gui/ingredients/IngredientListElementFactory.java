@@ -19,8 +19,8 @@ public final class IngredientListElementFactory {
 	private IngredientListElementFactory() {
 	}
 
-	public static List<IListElementInfo<?>> createBaseList(IIngredientManager ingredientManager, IModIdHelper modIdHelper) {
-		List<IListElementInfo<?>> ingredientListElements = new ArrayList<>();
+	public static List<IListElementInfo> createBaseList(IIngredientManager ingredientManager, IModIdHelper modIdHelper) {
+		List<IListElementInfo> ingredientListElements = new ArrayList<>();
 
 		for (IIngredientType<?> ingredientType : ingredientManager.getRegisteredIngredientTypes()) {
 			addToBaseList(ingredientListElements, ingredientManager, ingredientType, modIdHelper);
@@ -29,7 +29,7 @@ public final class IngredientListElementFactory {
 		return ingredientListElements;
 	}
 
-	public static <V> List<IListElementInfo<V>> createTestList(IIngredientManager ingredientManager, IIngredientType<V> ingredientType, Collection<V> ingredients, IModIdHelper modIdHelper) {
+	public static <V> List<IListElementInfo> createTestList(IIngredientManager ingredientManager, IIngredientType<V> ingredientType, Collection<V> ingredients, IModIdHelper modIdHelper) {
 		return ingredients.stream()
 			.map(i -> ingredientManager.createTypedIngredient(ingredientType, i, false))
 			.flatMap(Optional::stream)
@@ -38,24 +38,26 @@ public final class IngredientListElementFactory {
 			.toList();
 	}
 
-	public static List<IListElementInfo<?>> rebuildList(IIngredientManager ingredientManager, Collection<IListElement<?>> elements, IModIdHelper modIdHelper) {
-		List<IListElementInfo<?>> results = new ArrayList<>();
+	public static List<IListElementInfo> rebuildList(IIngredientManager ingredientManager, Collection<IListElement> elements, IModIdHelper modIdHelper) {
+		List<IListElementInfo> results = new ArrayList<>();
 
-		for (IListElement<?> element : elements) {
-			IListElementInfo<?> orderedElement = ListElementInfo.createFromElement(element, ingredientManager, modIdHelper);
-			if (orderedElement != null) {
-				results.add(orderedElement);
+		for (IListElement element : elements) {
+			if (element instanceof ListElement<?> listElement) {
+				IListElementInfo orderedElement = ListElementInfo.createFromElement(listElement, ingredientManager, modIdHelper);
+				if (orderedElement != null) {
+					results.add(orderedElement);
+				}
 			}
 		}
 
 		return results;
 	}
 
-	private static <V> void addToBaseList(List<IListElementInfo<?>> baseList, IIngredientManager ingredientManager, IIngredientType<V> ingredientType, IModIdHelper modIdHelper) {
+	private static <V> void addToBaseList(List<IListElementInfo> baseList, IIngredientManager ingredientManager, IIngredientType<V> ingredientType, IModIdHelper modIdHelper) {
 		Collection<ITypedIngredient<V>> typedIngredients = ingredientManager.getAllTypedIngredients(ingredientType);
 		LOGGER.debug("Registering ingredients: {}", ingredientType.getIngredientClass().getSimpleName());
 		for (ITypedIngredient<V> typedIngredient : typedIngredients) {
-			IListElementInfo<V> orderedElement = ListElementInfo.create(typedIngredient, ingredientManager, modIdHelper);
+			IListElementInfo orderedElement = ListElementInfo.create(typedIngredient, ingredientManager, modIdHelper);
 			if (orderedElement != null) {
 				baseList.add(orderedElement);
 			}

@@ -100,7 +100,7 @@ public class LookupHistoryOverlay implements IRecipeFocusSource {
 	}
 
 	public void updateLayout() {
-		List<IElement<?>> ingredientList = lookupHistory.getElements();
+		List<IElement> ingredientList = lookupHistory.getElements();
 		this.contents.set(0, ingredientList);
 	}
 
@@ -162,7 +162,7 @@ public class LookupHistoryOverlay implements IRecipeFocusSource {
 	}
 
 	@Override
-	public Stream<IClickableIngredientInternal<?>> getIngredientUnderMouse(double mouseX, double mouseY) {
+	public Stream<IClickableIngredientInternal> getIngredientUnderMouse(double mouseX, double mouseY) {
 		if (isListDisplayed()) {
 			return contents.getIngredientUnderMouse(mouseX, mouseY);
 		}
@@ -170,7 +170,7 @@ public class LookupHistoryOverlay implements IRecipeFocusSource {
 	}
 
 	@Override
-	public Stream<IDraggableIngredientInternal<?>> getDraggableIngredientUnderMouse(double mouseX, double mouseY) {
+	public Stream<IDraggableIngredientInternal> getDraggableIngredientUnderMouse(double mouseX, double mouseY) {
 		if (isListDisplayed()) {
 			return contents.getDraggableIngredientUnderMouse(mouseX, mouseY);
 		}

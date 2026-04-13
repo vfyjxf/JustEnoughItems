@@ -2,7 +2,7 @@ package mezz.jei.gui.ingredients;
 
 import mezz.jei.api.ingredients.ITypedIngredient;
 
-public class ListElement<V> implements IListElement<V> {
+public final class ListElement<V> implements IListElement {
 	private final ITypedIngredient<V> ingredient;
 	private final int createdIndex;
 	private int sortIndex;
