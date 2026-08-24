@@ -6,6 +6,7 @@ import mezz.jei.api.gui.buttons.IIconButtonController;
 import mezz.jei.api.gui.drawable.IScalableDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.ingredients.IIngredientSupplier;
+import mezz.jei.api.ingredients.IRecipeIngredientCollector;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.advanced.IRecipeButtonControllerFactory;
 import mezz.jei.api.recipe.category.IRecipeCategory;
@@ -209,6 +210,24 @@ public interface IRecipeManager {
 	 * @since 19.9.0
 	 */
 	<T> IIngredientSupplier getRecipeIngredients(IRecipeCategory<T> recipeCategory, T recipe);
+
+	/**
+	 * Drive the recipe category's {@code setRecipe} method and collect its ingredients, passing each one
+	 * to the given {@link IRecipeIngredientCollector} as a raw {@code (type, ingredient)} pair.
+	 *
+	 * <p>This reuses the same {@code setRecipe} path as {@link #getRecipeIngredients(IRecipeCategory, Object)},
+	 * but delivers the ingredients to the caller directly, without wrapping them in an
+	 * {@link IIngredientSupplier} or resolving them through JEI's internal supplier.</p>
+	 *
+	 * <p>The recipe search index is built separately and is not affected by this method.</p>
+	 *
+	 * @param recipeType the recipe type for this recipe.
+	 * @param recipe     the recipe to collect ingredients from.
+	 * @param collector  the receiver that is called once per collected ingredient.
+	 *
+	 * @since 30.26.0
+	 */
+	<T> void getRecipeIngredients(IRecipeType<T> recipeType, T recipe, IRecipeIngredientCollector collector);
 
 	/**
 	 * Get the registered recipe type for the given unique id.

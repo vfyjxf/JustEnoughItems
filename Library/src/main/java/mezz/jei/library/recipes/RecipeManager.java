@@ -6,6 +6,7 @@ import mezz.jei.api.gui.IRecipeLayoutDrawable;
 import mezz.jei.api.gui.drawable.IScalableDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotDrawable;
 import mezz.jei.api.ingredients.IIngredientSupplier;
+import mezz.jei.api.ingredients.IRecipeIngredientCollector;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.ICraftingStationLookup;
 import mezz.jei.api.recipe.IFocusGroup;
@@ -200,6 +201,18 @@ public class RecipeManager implements IRecipeManager {
 	@Override
 	public <T> IIngredientSupplier getRecipeIngredients(IRecipeCategory<T> recipeCategory, T recipe) {
 		return IngredientSupplierHelper.getIngredientSupplier(recipe, recipeCategory, ingredientManager, contextMap);
+	}
+
+	@Override
+	public <T> void getRecipeIngredients(IRecipeType<T> recipeType, T recipe, IRecipeIngredientCollector collector) {
+		ErrorUtil.checkNotNull(recipeType, "recipeType");
+		ErrorUtil.checkNotNull(recipe, "recipe");
+		ErrorUtil.checkNotNull(collector, "collector");
+
+		IRecipeCategory<T> recipeCategory = internal.getRecipeCategory(recipeType);
+		ErrorUtil.checkNotNull(recipeCategory, "recipeCategory");
+
+		IngredientSupplierHelper.collectIngredients(recipe, recipeCategory, ingredientManager, contextMap, collector);
 	}
 
 	@Override
