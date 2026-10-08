@@ -26,6 +26,8 @@ import mezz.jei.common.config.IClientConfig;
 import mezz.jei.common.gui.JeiTooltip;
 import mezz.jei.common.input.IInternalKeyMappings;
 import mezz.jei.common.input.keys.IJeiKeyMappingInternal;
+import mezz.jei.common.input.keys.JeiKeyConflictContext;
+import mezz.jei.common.input.keys.JeiKeyModifier;
 import mezz.jei.common.transfer.RecipeTransferService;
 import mezz.jei.common.util.SafeIngredientUtil;
 import mezz.jei.gui.bookmarks.IBookmark;
@@ -204,18 +206,27 @@ public class RecipeBookmarkElement<R, I> implements IElement<I> {
 
 	private boolean addBookmarkTooltipFeaturesIfEnabled(JeiTooltip tooltip, boolean pinned) {
 		JeiTooltip transferComponents = new JeiTooltip();
+		IRecipeTransferError transferError = null;
 		if (!pinned) {
-			transferComponents.addAll(createTransferComponents());
+			transferError = getTransferError();
+			transferComponents.addAll(createTransferComponents(transferError));
 		}
+		boolean hasDisplayableTransferError = transferError != null &&
+			transferError.getType() != IRecipeTransferError.Type.INTERNAL;
+		boolean showTransferErrorPreview = !pinned && hasDisplayableTransferError &&
+			isQuickTransferModifierHeld();
 		List<BookmarkTooltipFeature> bookmarkTooltipFeatures = getBookmarkTooltipFeatures();
 
-		if (bookmarkTooltipFeatures.isEmpty() && transferComponents.isEmpty()) {
+		if (bookmarkTooltipFeatures.isEmpty() && transferComponents.isEmpty() && !showTransferErrorPreview) {
 			return false;
 		}
 
 		if (!pinned && clientConfig.holdShiftToShowBookmarkTooltipFeaturesEnabled().get()) {
 			IJeiKeyMappingInternal pauseRecipeCycling = Internal.getKeyMappings().getPauseRecipeCycling();
 			if (pauseRecipeCycling.isUnbound()) {
+				if (showTransferErrorPreview) {
+					addPreviewTooltipComponent(tooltip);
+				}
 				return false;
 			}
 			if (!pauseRecipeCycling.isDown()) {
@@ -223,13 +234,24 @@ public class RecipeBookmarkElement<R, I> implements IElement<I> {
 					"jei.tooltip.bookmarks.tooltips.usage",
 					pauseRecipeCycling
 				);
+				if (showTransferErrorPreview) {
+					addPreviewTooltipComponent(tooltip);
+				}
 				return false;
 			}
 		}
 
 		boolean previewAdded = addBookmarkTooltipFeatures(tooltip, bookmarkTooltipFeatures);
+		if (!previewAdded && showTransferErrorPreview) {
+			previewAdded = addPreviewTooltipComponent(tooltip);
+		}
 		tooltip.addAll(transferComponents);
 		return previewAdded;
+	}
+
+	private static boolean isQuickTransferModifierHeld() {
+		return JeiKeyModifier.CONTROL_OR_COMMAND.isActive(JeiKeyConflictContext.UNIVERSAL) ||
+			JeiKeyModifier.SHIFT.isActive(JeiKeyConflictContext.UNIVERSAL);
 	}
 
 	private List<BookmarkTooltipFeature> getBookmarkTooltipFeatures() {
@@ -301,36 +323,38 @@ public class RecipeBookmarkElement<R, I> implements IElement<I> {
 		return true;
 	}
 
-	private JeiTooltip createTransferComponents() {
-		JeiTooltip results = new JeiTooltip();
-
+	private @Nullable IRecipeTransferError getTransferError() {
 		Minecraft minecraft = Minecraft.getInstance();
 		Screen screen = minecraft.gui.screen();
 		Player player = minecraft.player;
 		if (player != null && screen instanceof AbstractContainerScreen<?> containerScreen) {
-			IRecipeTransferError recipeTransferError = getRecipeLayoutDrawable()
+			return getRecipeLayoutDrawable()
 				.flatMap(recipeLayout -> {
 					return recipeTransferService.getTransferRecipeError(containerScreen, recipeLayout, player);
 				})
 				.orElse(null);
+		}
+		return null;
+	}
 
-			if (recipeTransferError == null || recipeTransferError.getType().allowsTransfer) {
-				IInternalKeyMappings keyMappings = Internal.getKeyMappings();
-				IJeiKeyMapping transferRecipeBookmark = keyMappings.getTransferRecipeBookmark();
-				if (!transferRecipeBookmark.isUnbound()) {
-					results.addKeyUsageComponent(
-						"jei.tooltip.bookmarks.tooltips.transfer.usage",
-						transferRecipeBookmark
-					);
-				}
+	private JeiTooltip createTransferComponents(@Nullable IRecipeTransferError recipeTransferError) {
+		JeiTooltip results = new JeiTooltip();
+		if (recipeTransferError == null || recipeTransferError.getType().allowsTransfer) {
+			IInternalKeyMappings keyMappings = Internal.getKeyMappings();
+			IJeiKeyMapping transferRecipeBookmark = keyMappings.getTransferRecipeBookmark();
+			if (!transferRecipeBookmark.isUnbound()) {
+				results.addKeyUsageComponent(
+					"jei.tooltip.bookmarks.tooltips.transfer.usage",
+					transferRecipeBookmark
+				);
+			}
 
-				IJeiKeyMapping maxTransferRecipeBookmark = keyMappings.getMaxTransferRecipeBookmark();
-				if (!maxTransferRecipeBookmark.isUnbound()) {
-					results.addKeyUsageComponent(
-						"jei.tooltip.bookmarks.tooltips.transfer.max.usage",
-						maxTransferRecipeBookmark
-					);
-				}
+			IJeiKeyMapping maxTransferRecipeBookmark = keyMappings.getMaxTransferRecipeBookmark();
+			if (!maxTransferRecipeBookmark.isUnbound()) {
+				results.addKeyUsageComponent(
+					"jei.tooltip.bookmarks.tooltips.transfer.max.usage",
+					maxTransferRecipeBookmark
+				);
 			}
 		}
 		return results;

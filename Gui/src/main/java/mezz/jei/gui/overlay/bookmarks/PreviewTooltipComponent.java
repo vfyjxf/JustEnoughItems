@@ -68,6 +68,7 @@ public class PreviewTooltipComponent<R> implements ClientTooltipComponent, Toolt
 			int mouseY = (int) this.mouseY;
 			drawable.setPosition(x + 2, y + 5);
 			drawable.drawRecipe(guiGraphics, mouseX, mouseY);
+			drawTransferError(guiGraphics, mouseX, mouseY);
 			return;
 		}
 		var pose = guiGraphics.pose();
